@@ -39,7 +39,7 @@ class QuoteControllerTest extends TestCase
     /** @test */
     public function it_refreshes_quotes_with_page()
     {
-        $response = $this->get("/refresh/4", [
+        $response = $this->get("/refresh/3", [
             'api-token' => config('app.api_token')
         ]);
 

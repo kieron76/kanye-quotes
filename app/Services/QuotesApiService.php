@@ -10,7 +10,6 @@ class QuotesApiService
     public function __construct(
         private ApiService $apiService,
         private RedisManager $redisManager,
-        private string $redisPrefix,
         private int $numberOfQuotes
     ) {
     }

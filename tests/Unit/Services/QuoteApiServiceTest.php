@@ -82,7 +82,7 @@ class QuoteApiServiceTest extends TestCase
         $quotes = $service->fetchQuotes();
 
         $this->assertCount($this->numberOfQuotes, $quotes);
-        $this->assertArrayHasKey('quote1', $quotes);
-        $this->assertArrayHasKey('quote2', $quotes);
+        $this->assertArrayHasKey('quote 1', $quotes);
+        $this->assertArrayHasKey('quote 2', $quotes);
     }
 }
