@@ -123,4 +123,10 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'kanye_api' => env('KANYE_API'),
+
+    'quote_count' => 5,
+
+    'api_token' => env('API_TOKEN'),
+
 ];
