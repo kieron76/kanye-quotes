@@ -62,7 +62,9 @@ composer install
 
 # Post Installation Config
 
-Migrations need to be run. Within the environment:
+Ensure that the `.env` file is the one based on `.env.example`
+
+Migrations need to be run and an app key generated. Within the environment:
 
 ```
 php artisan key:generate
