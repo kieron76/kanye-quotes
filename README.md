@@ -38,7 +38,7 @@ docker run --rm \
     -v "$(pwd):/var/www/html" \
     -w /var/www/html \
     laravelsail/php83-composer:latest \
-    composer install --ignore-platform-reqs && php artisan key:generate
+    composer install --ignore-platform-reqs
 ```
 
 This creates a temporary container to install the required dependencies. The docker run statement is taken straight from the laravel docs. The u flag maps the user on the host machine to the sail user in the container. This allows the correct permissions in the box for the correct working of the site and the ability to develop on the same files on the host machine. Once run, you can then run:
@@ -65,6 +65,7 @@ composer install
 Migrations need to be run. Within the environment:
 
 ```
+php artisan key:generate
 php artisan migrate
 ```
 
