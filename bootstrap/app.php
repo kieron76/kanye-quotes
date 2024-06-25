@@ -14,8 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->appendToGroup('app-middlewear', [
-            CheckApiToken::class,
             CheckConfig::class,
+            CheckApiToken::class,
         ]);
         //
     })
