@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Interfaces\QuotesApiServiceInterface;
 use Illuminate\Support\ServiceProvider;
 use App\Services\ApiService;
 use App\Services\QuotesApiService;
@@ -18,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
             return new Client([
                 'base_uri' => config('app.kanye_api'),
             ]);
+        });
+
+        $this->app->singleton(QuotesApiServiceInterface::class, function () {
+            return $this->app->make(QuotesApiService::class);
         });
 
         $this->app->when(QuotesApiService::class)

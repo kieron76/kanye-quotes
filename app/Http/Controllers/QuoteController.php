@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\QuotesApiService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Interfaces\QuotesApiServiceInterface;
 
 class QuoteController extends Controller
 {
     public function __construct(
-        private QuotesApiService $quotesApiService,
+        private QuotesApiServiceInterface $quotesApiService,
     ) {
     }
 

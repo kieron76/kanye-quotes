@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Interfaces\QuotesApiServiceInterface;
 use App\Services\ApiService;
 use Illuminate\Redis\RedisManager;
 
-class QuotesApiService
+class QuotesApiService implements QuotesApiServiceInterface
 {
+    private const QUOTE_LIST_KEY = 'quotes_list';
+
     public function __construct(
         private ApiService $apiService,
         private RedisManager $redisManager,
@@ -22,14 +25,14 @@ class QuotesApiService
             return $results;
         }
 
+        $results = [];
         $i = 1;
         while ($i <= $this->numberOfQuotes) {
             $quote = $this->apiService->get();
-
             $hashedQuote = $this->hashQuote($quote);
 
             if (!$this->redisManager->exists($hashedQuote)) {
-                $this->redisManager->set($hashedQuote, $quote);
+                $this->redisManager->rpush(self::QUOTE_LIST_KEY, $hashedQuote);
                 $results['quote ' . $i] = $quote;
                 $i++;
             }
@@ -40,31 +43,18 @@ class QuotesApiService
 
     protected function fetchCachedQuotes(int $page): array|bool
     {
-        $cursor = 4;
-        $keys = [];
-        $endIndex = $this->getEndIndex($page);
+        $start = $this->getStartIndex($page);
+        $end = $this->getEndIndex($page);
+
+        $keys = $this->redisManager->lrange(self::QUOTE_LIST_KEY, $start, $end);
+
+        if (empty($keys)) {
+            return false;
+        }
+
         $quotes = [];
-
-        do {
-            list($cursor, $batchKeys) = $this->redisManager->scan($cursor);
-
-            if (!$batchKeys) {
-                return false;
-            }
-
-            $keys = array_merge($keys, $batchKeys);
-
-            if (count($keys) > $endIndex) {
-                break;
-            }
-        } while ($cursor != 0);
-
-        $keysForPage = array_slice($keys, $this->getStartIndex($page), $this->numberOfQuotes);
-
-        $i = 1;
-        foreach ($keysForPage as $key) {
-            $quotes['quote ' . $i] = $this->redisManager->get($key);
-            $i++;
+        foreach ($keys as $index => $key) {
+            $quotes['quote ' . ($index + 1)] = $this->redisManager->get($key);
         }
 
         return $quotes;
@@ -77,11 +67,11 @@ class QuotesApiService
 
     protected function getStartIndex(int $page): int
     {
-        return ($page) * $this->numberOfQuotes;
+        return $page * $this->numberOfQuotes;
     }
 
     protected function getEndIndex(int $page): int
     {
-        return $this->getStartIndex($page) + $page - 1;
+        return $this->getStartIndex($page) + $this->numberOfQuotes - 1;
     }
 }

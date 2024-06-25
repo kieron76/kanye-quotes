@@ -39,11 +39,19 @@ class QuoteApiServiceTest extends TestCase
         $cachedQuotes = [
             'quote 1' => 'Cached Quote 1',
             'quote 2' => 'Cached Quote 2',
+            'quote 3' => 'Cached Quote 3',
+            'quote 4' => 'Cached Quote 4',
+            'quote 5' => 'Cached Quote 5',
         ];
 
-        $this->redisManager->shouldReceive('scan')
-            ->once()
-            ->andReturn([0, array_keys($cachedQuotes)]);
+        $this->redisManager->shouldReceive('lrange')
+            ->andReturn([
+                'quote 1',
+                'quote 2',
+                'quote 3',
+                'quote 4',
+                'quote 5',
+            ]);
 
         foreach ($cachedQuotes as $key => $quote) {
             $this->redisManager->shouldReceive('get')
@@ -65,18 +73,19 @@ class QuoteApiServiceTest extends TestCase
         $this->apiService->shouldReceive('get')->times($this->numberOfQuotes)->andReturn(
             'Quote 1 from API',
             'Quote 2 from API',
+            'Quote 3 from API',
+            'Quote 4 from API',
+            'Quote 5 from API',
         );
 
-        $this->redisManager->shouldReceive('scan')
-            ->once()
-            ->andReturn([0, []]);
+        $this->redisManager->shouldReceive('lrange')
+            ->andReturn(false);
 
         $this->redisManager->shouldReceive('exists')
             ->times($this->numberOfQuotes)
             ->andReturn(false);
 
-        $this->redisManager
-            ->shouldReceive('set')
+        $this->redisManager->shouldReceive('rpush')
             ->times($this->numberOfQuotes);
 
         $quotes = $service->fetchQuotes();
@@ -84,5 +93,8 @@ class QuoteApiServiceTest extends TestCase
         $this->assertCount($this->numberOfQuotes, $quotes);
         $this->assertArrayHasKey('quote 1', $quotes);
         $this->assertArrayHasKey('quote 2', $quotes);
+        $this->assertArrayHasKey('quote 3', $quotes);
+        $this->assertArrayHasKey('quote 4', $quotes);
+        $this->assertArrayHasKey('quote 5', $quotes);
     }
 }
