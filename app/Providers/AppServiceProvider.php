@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->when(QuotesApiService::class)
             ->needs('$numberOfQuotes')
             ->give(config('app.quote_count'));
+
+        $this->app->when(QuotesApiService::class)
+            ->needs('$prefix')
+            ->give(config('database.redis.options.prefix'));
     }
 
     /**

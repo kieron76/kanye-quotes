@@ -5,22 +5,29 @@ namespace App\Services;
 use App\Interfaces\QuotesApiServiceInterface;
 use App\Services\ApiService;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Facades\Redis;
 
 class QuotesApiService implements QuotesApiServiceInterface
 {
-    private const QUOTE_LIST_KEY = 'quotes_list';
-
     public function __construct(
         private ApiService $apiService,
         private RedisManager $redisManager,
-        private int $numberOfQuotes
+        private int $numberOfQuotes,
+        private string $prefix,
     ) {
     }
 
-    public function fetchQuotes(int $page = 0): array
+    public function fetchQuotes(int $page = 1): array
     {
+        // make sure the page number is greater than 1
+        // could warn the consumer of this class that they are doing it wrong
+        if ($page < 1) {
+            $page = 1;
+        }
+
         $results = $this->fetchCachedQuotes($page);
 
+        // if there is cache, then just return those cached results
         if ($results) {
             return $results;
         }
@@ -28,11 +35,14 @@ class QuotesApiService implements QuotesApiServiceInterface
         $results = [];
         $i = 1;
         while ($i <= $this->numberOfQuotes) {
+            // get the quote from the api
             $quote = $this->apiService->get();
+
+            // store the quote in cache with a key as a hash of the quote
             $hashedQuote = $this->hashQuote($quote);
 
             if (!$this->redisManager->exists($hashedQuote)) {
-                $this->redisManager->rpush(self::QUOTE_LIST_KEY, $hashedQuote);
+                $this->redisManager->set($hashedQuote, $quote);
                 $results['quote ' . $i] = $quote;
                 $i++;
             }
@@ -43,18 +53,21 @@ class QuotesApiService implements QuotesApiServiceInterface
 
     protected function fetchCachedQuotes(int $page): array|bool
     {
-        $start = $this->getStartIndex($page);
-        $end = $this->getEndIndex($page);
+        $keys = $this->redisManager->keys('*');
 
-        $keys = $this->redisManager->lrange(self::QUOTE_LIST_KEY, $start, $end);
-
-        if (empty($keys)) {
+        // if no cache, or the requested page of quotes is greater than the cache store
+        // then return false
+        if (empty($keys) || count($keys) - 1 < $this->getStartIndex($page)) {
             return false;
         }
 
         $quotes = [];
-        foreach ($keys as $index => $key) {
-            $quotes['quote ' . ($index + 1)] = $this->redisManager->get($key);
+        $returnIndex = 1;
+        // skip the cache store until we get to the page of quotes we need
+        for ($i = $this->getStartIndex($page); $i < $this->getEndIndex($page); $i++) {
+            $keyWithoutPrefix = str_replace($this->prefix, '', $keys[$i]);
+            $quotes['quote ' . ($returnIndex)] = $this->redisManager->get($keyWithoutPrefix);
+            $returnIndex++;
         }
 
         return $quotes;

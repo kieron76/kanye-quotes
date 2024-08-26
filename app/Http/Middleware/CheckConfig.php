@@ -21,7 +21,7 @@ class CheckConfig
 
         if (strlen(trim($apiToken)) < 10) {
             $logMessage = "The application has not been configured correctly, ";
-            $logMessage .= "please ensure you set the api token.";
+            $logMessage .= "please ensure you set the api token and that it is not under 10 characters long.";
 
             Log::critical($logMessage);
 
